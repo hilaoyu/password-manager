@@ -15,5 +15,6 @@ func main() {
 	config.UiDefault.RefreshTop(pm.UiTop())
 	config.UiDefault.RefreshMainLeft(pm.UiMenuTree())
 	config.UiDefault.RefreshMainContent(pm.UiWelcome())
+	pm.ListenFileDropIn()
 	config.UiDefault.ShowAndRun()
 }

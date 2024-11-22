@@ -13,6 +13,17 @@ import (
 	"slices"
 )
 
+func (pm *PasswordManager) ListenFileDropIn() {
+	config.UiDefault.Window.SetOnDropped(func(position fyne.Position, uris []fyne.URI) {
+		if len(uris) > 0 {
+			path := uris[0].Path()
+			if "" != path {
+				pm.OpenFile(path)
+			}
+		}
+	})
+	return
+}
 func (pm *PasswordManager) HandleAppendAndViewPasswordObject(po *PasswordObject) {
 	config.UiDefault.RefreshMainLeft(pm.UiMenuTree())
 	if nil == po {
@@ -30,57 +41,64 @@ func (pm *PasswordManager) HandleOpenPasswordObject() {
 	}
 	config.UiDefault.DialogOpenFile(func(reader fyne.URIReadCloser) {
 		defer reader.Close()
-		enData, err := os.ReadFile(reader.URI().Path())
+		path := reader.URI().Path()
+		if "" != path {
+			pm.OpenFile(path)
+		}
+	}, []string{".pwe"}, defaultPath)
+
+}
+func (pm *PasswordManager) OpenFile(path string) {
+	enData, err := os.ReadFile(path)
+	if nil != err {
+		config.UiDefault.DialogError(err)
+		return
+	}
+
+	var d dialog.Dialog
+	d = config.UiDefault.Dialog("请输入密码", pm.UiInputPasswordForm(func(value string) {
+		if "" == value {
+			config.UiDefault.DialogError(fmt.Errorf("密码不能为空"))
+			return
+		}
+		d.Hide()
+		secret := UtilPasswordToSecret(value)
+
+		encryptor := utilEnc.NewAesEncryptor(secret)
+		var ivLength int
+		ivLength, err = encryptor.GetBlockSize()
 		if nil != err {
 			config.UiDefault.DialogError(err)
 			return
 		}
+		if ivLength <= 0 {
+			config.UiDefault.DialogError(fmt.Errorf("密码错误"))
+			return
+		}
 
-		var d dialog.Dialog
-		d = config.UiDefault.Dialog("请输入密码", pm.UiInputPasswordForm(func(value string) {
-			if "" == value {
-				config.UiDefault.DialogError(fmt.Errorf("密码不能为空"))
-				return
-			}
-			d.Hide()
-			secret := UtilPasswordToSecret(value)
+		iv := []byte(secret)[:ivLength]
+		var deData []byte
+		deData, err = encryptor.DecryptByte(enData, iv)
+		if nil != err {
+			config.UiDefault.DialogError(fmt.Errorf("密码错误! "))
+			return
+		}
 
-			encryptor := utilEnc.NewAesEncryptor(secret)
-			var ivLength int
-			ivLength, err = encryptor.GetBlockSize()
-			if nil != err {
-				config.UiDefault.DialogError(err)
-				return
-			}
-			if ivLength <= 0 {
-				config.UiDefault.DialogError(fmt.Errorf("密码错误"))
-				return
-			}
+		po := &PasswordObject{}
+		err = json.Unmarshal(deData, po)
+		if nil != err {
+			config.UiDefault.DialogError(fmt.Errorf("密码错误!! "))
+			return
+		}
 
-			iv := []byte(secret)[:ivLength]
-			var deData []byte
-			deData, err = encryptor.DecryptByte(enData, iv)
-			if nil != err {
-				config.UiDefault.DialogError(fmt.Errorf("密码错误! "))
-				return
-			}
-
-			po := &PasswordObject{}
-			err = json.Unmarshal(deData, po)
-			if nil != err {
-				config.UiDefault.DialogError(fmt.Errorf("密码错误!! "))
-				return
-			}
-
-			po.Secret = secret
-			po.SavePath = reader.URI().Path()
-			pm.PasswordObjects = append(pm.PasswordObjects, po)
-			pm.HandleAppendAndViewPasswordObject(po)
-		}))
-
-	}, []string{".pwe"}, defaultPath)
+		po.Secret = secret
+		po.SavePath = path
+		pm.PasswordObjects = append(pm.PasswordObjects, po)
+		pm.HandleAppendAndViewPasswordObject(po)
+	}))
 
 }
+
 func (pm *PasswordManager) HandleNewPasswordObject() {
 	config.UiDefault.RefreshMainContent(pm.UiPasswordObjectForm(nil))
 }
