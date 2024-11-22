@@ -1,0 +1,8 @@
+.DS_Store
+.idea
+/go.sum
+/build
+
+/frontend/node_modules/
+/bin/
+/password-manager.app/
