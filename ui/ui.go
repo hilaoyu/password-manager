@@ -55,6 +55,7 @@ func (u *Ui) Init() {
 	content := container.NewBorder(boxTop, boxBottom, nil, nil, boxMain)
 	//content := split
 	u.Window.SetContent(content)
+	u.Window.CenterOnScreen()
 
 }
 
