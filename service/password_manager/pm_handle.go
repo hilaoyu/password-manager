@@ -7,6 +7,7 @@ import (
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
 	"github.com/hilaoyu/go-utils/utilEnc"
+	"github.com/hilaoyu/go-utils/utilTime"
 	"github.com/hilaoyu/password-manager/config"
 	"os"
 	"runtime"
@@ -14,7 +15,7 @@ import (
 )
 
 func (pm *PasswordManager) ListenFileDropIn() {
-	config.UiDefault.Window.SetOnDropped(func(position fyne.Position, uris []fyne.URI) {
+	config.UiDefault().Window.SetOnDropped(func(position fyne.Position, uris []fyne.URI) {
 		if len(uris) > 0 {
 			path := uris[0].Path()
 			if "" != path {
@@ -25,9 +26,9 @@ func (pm *PasswordManager) ListenFileDropIn() {
 	return
 }
 func (pm *PasswordManager) HandleAppendAndViewPasswordObject(po *PasswordObject) {
-	config.UiDefault.RefreshMainLeft(pm.UiMenuTree())
+	config.UiDefault().RefreshMainLeft(pm.UiMenuTree())
 	if nil == po {
-		config.UiDefault.RefreshMainContent(pm.UiWelcome())
+		config.UiDefault().RefreshMainContent(pm.UiWelcome())
 		return
 	}
 	menuKey := utilEnc.Md5(po.SavePath)
@@ -39,7 +40,7 @@ func (pm *PasswordManager) HandleOpenPasswordObject() {
 	if "darwin" != runtime.GOOS {
 		defaultPath = config.SelfPath
 	}
-	config.UiDefault.DialogOpenFile(func(reader fyne.URIReadCloser) {
+	config.UiDefault().DialogOpenFile(func(reader fyne.URIReadCloser) {
 		defer reader.Close()
 		path := reader.URI().Path()
 		if "" != path {
@@ -51,14 +52,14 @@ func (pm *PasswordManager) HandleOpenPasswordObject() {
 func (pm *PasswordManager) OpenFile(path string) {
 	enData, err := os.ReadFile(path)
 	if nil != err {
-		config.UiDefault.DialogError(err)
+		config.UiDefault().DialogError(err)
 		return
 	}
 
 	var d dialog.Dialog
-	d = config.UiDefault.Dialog("请输入密码", pm.UiInputPasswordForm(func(value string) {
+	d = config.UiDefault().Dialog("请输入密码", pm.UiInputPasswordForm(func(value string) {
 		if "" == value {
-			config.UiDefault.DialogError(fmt.Errorf("密码不能为空"))
+			config.UiDefault().DialogError(fmt.Errorf("密码不能为空"))
 			return
 		}
 		d.Hide()
@@ -68,11 +69,11 @@ func (pm *PasswordManager) OpenFile(path string) {
 		var ivLength int
 		ivLength, err = encryptor.GetBlockSize()
 		if nil != err {
-			config.UiDefault.DialogError(err)
+			config.UiDefault().DialogError(err)
 			return
 		}
 		if ivLength <= 0 {
-			config.UiDefault.DialogError(fmt.Errorf("密码错误"))
+			config.UiDefault().DialogError(fmt.Errorf("密码错误"))
 			return
 		}
 
@@ -80,19 +81,21 @@ func (pm *PasswordManager) OpenFile(path string) {
 		var deData []byte
 		deData, err = encryptor.DecryptByte(enData, iv)
 		if nil != err {
-			config.UiDefault.DialogError(fmt.Errorf("密码错误! "))
+			config.UiDefault().DialogError(fmt.Errorf("密码错误! "))
 			return
 		}
 
 		po := &PasswordObject{}
 		err = json.Unmarshal(deData, po)
 		if nil != err {
-			config.UiDefault.DialogError(fmt.Errorf("密码错误!! "))
+			config.UiDefault().DialogError(fmt.Errorf("密码错误!! "))
 			return
 		}
 
 		po.Secret = secret
 		po.SavePath = path
+		po.verifyTimer = utilTime.NewTimer(config.PasswordVerifyDuration())
+
 		pm.PasswordObjects = append(pm.PasswordObjects, po)
 		pm.HandleAppendAndViewPasswordObject(po)
 	}))
@@ -100,27 +103,27 @@ func (pm *PasswordManager) OpenFile(path string) {
 }
 
 func (pm *PasswordManager) HandleNewPasswordObject() {
-	config.UiDefault.RefreshMainContent(pm.UiPasswordObjectForm(nil))
+	config.UiDefault().RefreshMainContent(pm.UiPasswordObjectForm(nil))
 }
 func (pm *PasswordManager) HandleEditPasswordObject(po *PasswordObject) {
-	config.UiDefault.RefreshMainContent(pm.UiPasswordObjectForm(po))
+	config.UiDefault().RefreshMainContent(pm.UiPasswordObjectForm(po))
 }
 func (pm *PasswordManager) HandleViewPasswordObject(po *PasswordObject) {
 
 	if nil == po {
-		config.UiDefault.RefreshMainContent(widget.NewLabel("密码本不存在"))
+		config.UiDefault().RefreshMainContent(widget.NewLabel("密码本不存在"))
 	}
-	config.UiDefault.RefreshMainContent(pm.UiPasswordObject(po))
+	config.UiDefault().RefreshMainContent(pm.UiPasswordObject(po))
 }
 func (pm *PasswordManager) HandleSavePasswordObject(po *PasswordObject, openNow bool) {
 	if nil == po {
-		config.UiDefault.DialogError(fmt.Errorf("密码本为空"))
+		config.UiDefault().DialogError(fmt.Errorf("密码本为空"))
 		return
 	}
 
 	if "" == po.Secret {
 		var d dialog.Dialog
-		d = config.UiDefault.Dialog("设置密码", pm.UiInputPasswordConfirmForm(func(value string) {
+		d = config.UiDefault().Dialog("设置密码", pm.UiInputPasswordConfirmForm(func(value string) {
 			po.Secret = UtilPasswordToSecret(value)
 			d.Hide()
 			pm.HandleSavePasswordObject(po, openNow)
@@ -130,7 +133,7 @@ func (pm *PasswordManager) HandleSavePasswordObject(po *PasswordObject, openNow 
 
 	enData, err := po.Encode()
 	if nil != err {
-		config.UiDefault.DialogError(err)
+		config.UiDefault().DialogError(err)
 		return
 	}
 
@@ -139,11 +142,11 @@ func (pm *PasswordManager) HandleSavePasswordObject(po *PasswordObject, openNow 
 		if "darwin" != runtime.GOOS {
 			defaultPath = config.SelfPath
 		}
-		config.UiDefault.DialogSaveFile(func(writer fyne.URIWriteCloser) {
+		config.UiDefault().DialogSaveFile(func(writer fyne.URIWriteCloser) {
 			defer writer.Close()
 			_, err = writer.Write(enData)
 			if nil != err {
-				config.UiDefault.DialogError(err)
+				config.UiDefault().DialogError(err)
 				return
 			}
 			po.SavePath = writer.URI().Path()
@@ -152,14 +155,14 @@ func (pm *PasswordManager) HandleSavePasswordObject(po *PasswordObject, openNow 
 				pm.HandleAppendAndViewPasswordObject(po)
 			}
 
-			config.UiDefault.DialogInfo("提示", "保存成功")
+			config.UiDefault().DialogInfo("提示", "保存成功")
 		}, defaultPath, po.Name+".pwe")
 		return
 	}
 
 	err = os.WriteFile(po.SavePath, enData, 0666)
 	if nil != err {
-		config.UiDefault.DialogError(err)
+		config.UiDefault().DialogError(err)
 		return
 	}
 	if openNow {
@@ -189,9 +192,47 @@ func (pm *PasswordManager) HandleRemovePasswordObject(po *PasswordObject) {
 
 func (pm *PasswordManager) HandleEditPasswordItem(pi *PasswordItem, po *PasswordObject) {
 	var d dialog.Dialog
-	d = config.UiDefault.Dialog("密码详情", pm.UiPasswordItemForm(pi, po, func() {
+	d = config.UiDefault().Dialog("密码详情", pm.UiPasswordItemForm(pi, po, func() {
 		pm.HandleSavePasswordObject(po, true)
 		d.Hide()
 	}))
 
+}
+
+func (pm *PasswordManager) HandleVerifyPOPassword(po *PasswordObject, verifiedCallback func()) {
+	if nil == po {
+		verifiedCallback()
+		return
+	}
+	if !po.verifyTimer.IsExpired() {
+		fmt.Println("!po.verifyTimer.IsExpired()")
+		verifiedCallback()
+		return
+	}
+	fmt.Println("po.verifyTimer.IsExpired()")
+	pm.HandleVerifyPOPasswordByInput(po, verifiedCallback)
+
+	return
+}
+func (pm *PasswordManager) HandleVerifyPOPasswordByInput(po *PasswordObject, verifiedCallback func()) {
+	var d dialog.Dialog
+	d = config.UiDefault().Dialog(fmt.Sprintf("请验证 %s 密码", po.Name), pm.UiInputPasswordForm(func(value string) {
+		if "" == value {
+			config.UiDefault().DialogError(fmt.Errorf("密码不能为空"))
+			return
+		}
+
+		if UtilPasswordToSecret(value) == po.Secret {
+			d.Hide()
+			po.verifyTimer.Reset(config.PasswordVerifyDuration())
+			verifiedCallback()
+			return
+		}
+
+		config.UiDefault().DialogError(fmt.Errorf("密码错误"))
+		return
+
+	}))
+
+	return
 }

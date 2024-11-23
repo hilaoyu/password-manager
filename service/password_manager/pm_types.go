@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"fyne.io/fyne/v2/widget"
 	"github.com/hilaoyu/go-utils/utilEnc"
+	"github.com/hilaoyu/go-utils/utilTime"
 )
 
 type PasswordManager struct {
@@ -39,7 +40,8 @@ type PasswordObject struct {
 	SavePath      string          `json:"-"`
 	Secret        string          `json:"-"`
 	Passwords     []*PasswordItem `json:"passwords,omitempty"`
-	searchKeyword string          `json:"-"`
+	searchKeyword string
+	verifyTimer   *utilTime.Timer
 }
 
 func (po *PasswordObject) Encode() (enData []byte, err error) {

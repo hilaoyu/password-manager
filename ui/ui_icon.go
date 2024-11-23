@@ -7,8 +7,10 @@ import (
 	"fyne.io/fyne/v2/widget"
 )
 
-func (u *Ui) IconCopy(value string) (content *fyne.Container) {
-	content = container.NewStack(widget.NewToolbar(widget.NewToolbarAction(theme.ContentCopyIcon(), func() { u.UtilToClipboard(value) })))
+func (u *Ui) IconCopy(callback func(copyFunc func(value string))) (content *fyne.Container) {
+	content = container.NewStack(widget.NewToolbar(widget.NewToolbarAction(theme.ContentCopyIcon(), func() {
+		callback(u.UtilToClipboard)
+	})))
 	return
 }
 func (u *Ui) IconEdit(callback func()) (content *fyne.Container) {

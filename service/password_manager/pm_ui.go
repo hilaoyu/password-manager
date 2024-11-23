@@ -11,6 +11,7 @@ import (
 	"github.com/hilaoyu/password-manager/config"
 	"slices"
 	"strings"
+	"time"
 )
 
 func (pm *PasswordManager) UiWelcome() (c *fyne.Container) {
@@ -44,7 +45,7 @@ func (pm *PasswordManager) UiMenuTree() (c *fyne.Container) {
 		},
 		func(branch bool) fyne.CanvasObject {
 			label := widget.NewLabel("密码本名称")
-			removeIcon := config.UiDefault.IconRemove(func() {})
+			removeIcon := config.UiDefault().IconRemove(func() {})
 			if branch {
 				label = widget.NewLabel("-密码本名称")
 			}
@@ -65,7 +66,7 @@ func (pm *PasswordManager) UiMenuTree() (c *fyne.Container) {
 				text += " (分支)"
 			}
 			label := widget.NewLabel(text)
-			removeIcon := config.UiDefault.IconRemove(func() {
+			removeIcon := config.UiDefault().IconRemove(func() {
 				pm.HandleRemovePasswordObject(po)
 			})
 			content := container.NewBorder(nil, nil, nil, removeIcon, label)
@@ -80,7 +81,7 @@ func (pm *PasswordManager) UiMenuTree() (c *fyne.Container) {
 			return utilEnc.Md5(object.SavePath) == id
 		})
 		if nil == po {
-			config.UiDefault.DialogError(fmt.Errorf("数据错误，请重新打开"))
+			config.UiDefault().DialogError(fmt.Errorf("数据错误，请重新打开"))
 			return
 		}
 		pm.HandleViewPasswordObject(po)
@@ -137,15 +138,17 @@ func (pm *PasswordManager) UiPasswordObjectTitle(po *PasswordObject) (content *f
 	}
 
 	title := widget.NewRichTextFromMarkdown(fmt.Sprintf("# %s", po.Name))
-	poEditButton := config.UiDefault.IconEdit(func() {
-		pm.HandleEditPasswordObject(po)
+	poEditButton := config.UiDefault().IconEdit(func() {
+		pm.HandleVerifyPOPassword(po, func() {
+			pm.HandleEditPasswordObject(po)
+		})
 	})
 
 	intro := widget.NewAccordion(widget.NewAccordionItem(fmt.Sprintf("%s", po.SavePath), widget.NewRichTextFromMarkdown(po.Description)))
-	/*saveButton := config.UiDefault.IconSave(func() {
+	/*saveButton := config.UiDefault().IconSave(func() {
 		newPo, err := po.Clone()
 		if nil != err {
-			config.UiDefault.DialogError(fmt.Errorf("另存失败,复制数据失败:%v", err))
+			config.UiDefault().DialogError(fmt.Errorf("另存失败,复制数据失败:%v", err))
 			return
 
 		}
@@ -154,15 +157,17 @@ func (pm *PasswordManager) UiPasswordObjectTitle(po *PasswordObject) (content *f
 		pm.HandleSavePasswordObject(newPo, false)
 	})*/
 	saveButton := widget.NewButton("另存...", func() {
-		newPo, err := po.Clone()
-		if nil != err {
-			config.UiDefault.DialogError(fmt.Errorf("另存失败,复制数据失败:%v", err))
-			return
+		pm.HandleVerifyPOPasswordByInput(po, func() {
+			newPo, err := po.Clone()
+			if nil != err {
+				config.UiDefault().DialogError(fmt.Errorf("另存失败,复制数据失败:%v", err))
+				return
 
-		}
-		newPo.Secret = ""
-		newPo.SavePath = ""
-		pm.HandleSavePasswordObject(newPo, false)
+			}
+			newPo.Secret = ""
+			newPo.SavePath = ""
+			pm.HandleSavePasswordObject(newPo, false)
+		})
 	})
 	content = container.NewVBox(container.NewBorder(nil, nil, container.NewHBox(title, poEditButton, widget.NewSeparator()), saveButton, intro), widget.NewSeparator())
 	return
@@ -171,13 +176,13 @@ func (pm *PasswordManager) UiPasswordObjectToolbar(po *PasswordObject) (content 
 	content = container.NewVBox()
 	searchInput := widget.NewEntry()
 	searchInput.SetText(po.searchKeyword)
-	searchButton := config.UiDefault.IconSearch(func() {
+	searchButton := config.UiDefault().IconSearch(func() {
 		po.searchKeyword = strings.TrimSpace(searchInput.Text)
 		pm.HandleViewPasswordObject(po)
 		return
 	})
 
-	addButton := config.UiDefault.IconAdd(func() {
+	addButton := config.UiDefault().IconAdd(func() {
 		pm.HandleEditPasswordItem(nil, po)
 	})
 
@@ -205,83 +210,98 @@ func (pm *PasswordManager) UiPasswordItem(pi *PasswordItem, po *PasswordObject) 
 	content = container.NewVBox()
 
 	nameUi := widget.NewRichTextFromMarkdown(fmt.Sprintf(`## %s `, pi.Name))
-	editButton := config.UiDefault.IconEdit(func() {
-		pm.HandleEditPasswordItem(pi, po)
-	})
-	deleteButton := config.UiDefault.IconDelete(func() {
-		po.Passwords = slices.DeleteFunc(po.Passwords, func(item *PasswordItem) bool {
-			if nil == item {
-				return false
-			}
-			return item.Id == pi.Id
+	editButton := config.UiDefault().IconEdit(func() {
+		pm.HandleVerifyPOPassword(po, func() {
+			pm.HandleEditPasswordItem(pi, po)
 		})
-		pm.HandleSavePasswordObject(po, true)
+	})
+	deleteButton := config.UiDefault().IconDelete(func() {
+		pm.HandleVerifyPOPassword(po, func() {
+			po.Passwords = slices.DeleteFunc(po.Passwords, func(item *PasswordItem) bool {
+				if nil == item {
+					return false
+				}
+				return item.Id == pi.Id
+			})
+			pm.HandleSavePasswordObject(po, true)
+		})
 	})
 	content.Add(container.NewBorder(nil, nil, nil, deleteButton, container.NewHBox(nameUi, editButton)))
 
-	uriUi := container.NewHBox(
+	uriUi := container.NewBorder(nil, nil, nil, config.UiDefault().IconCopy(func(copyFunc func(value string)) {
+		copyFunc(pi.Uri)
+	}), container.NewHBox(
 		widget.NewRichTextFromMarkdown("### URI: "),
 		widget.NewLabel(pi.Uri),
-		config.UiDefault.IconCopy(pi.Uri),
-	)
+	))
 
 	DescUi := container.NewHBox(
 		widget.NewLabel(pi.Description),
 	)
 	column1 := container.NewVBox(uriUi, DescUi)
 
-	accountUi := container.NewHBox()
-	accountUi.Add(widget.NewLabel(pi.Account))
-	accountUi.Add(config.UiDefault.IconCopy(pi.Account))
+	accountUi := container.NewBorder(nil, nil, nil, config.UiDefault().IconCopy(func(copyFunc func(value string)) {
+		copyFunc(pi.Account)
+	}), widget.NewLabel(pi.Account))
 
-	column2 := container.NewVBox(accountUi, pm.UiPassword(pi.Password))
+	column2 := container.NewVBox(accountUi, pm.UiPassword(pi.Password, po))
 
 	column3 := container.NewVBox()
 	if len(pi.Extra) > 0 {
 		for _, pe := range pi.Extra {
-			peUi := container.NewHBox(
+			peUi := container.NewBorder(nil, nil, nil, config.UiDefault().IconCopy(func(copyFunc func(value string)) {
+				copyFunc(pe.Value)
+			}), container.NewHBox(
 				widget.NewRichTextFromMarkdown(fmt.Sprintf("### %s: ", pe.Name)),
 				widget.NewLabel(pe.Value),
-				config.UiDefault.IconCopy(pe.Value),
-			)
+			))
 			column3.Add(peUi)
 		}
 	}
 
-	content.Add(container.NewGridWithColumns(3, column1, column2, column3))
+	grid := container.NewGridWithColumns(3, column1, column2, column3)
+	content.Add(grid)
 	content.Add(widget.NewSeparator())
 	return
 }
-func (pm *PasswordManager) UiPassword(password string) (content *fyne.Container) {
+func (pm *PasswordManager) UiPassword(password string, po *PasswordObject) (content *fyne.Container) {
 	if "" == password {
 		content = container.NewStack(widget.NewLabel(""))
 		return
 	}
-	content = container.NewHBox()
-	passwordView := widget.NewLabel("******      ")
-	content.Add(passwordView)
+	passwordView := widget.NewLabel("******")
 
-	content.Add(config.UiDefault.IconCopy(password))
-
-	passwordVisibilityButton := widget.NewToolbar()
-	passwordVisibilityAction := widget.NewToolbarAction(theme.VisibilityIcon(), func() {})
-	passwordVisibilityOffAction := widget.NewToolbarAction(theme.VisibilityOffIcon(), func() {})
-	passwordVisibilityButton.Append(passwordVisibilityAction)
-	passwordVisibilityAction.OnActivated = func() {
-		passwordView.SetText(password)
-		passwordVisibilityButton.Items = nil
-		passwordVisibilityButton.Append(passwordVisibilityOffAction)
-		passwordVisibilityButton.Refresh()
-
-	}
-	passwordVisibilityOffAction.OnActivated = func() {
-		passwordView.SetText("******      ")
-		passwordVisibilityButton.Items = nil
-		passwordVisibilityButton.Append(passwordVisibilityAction)
-		passwordVisibilityButton.Refresh()
+	visibilityAction := widget.NewToolbar()
+	planShow := widget.NewToolbarAction(theme.VisibilityIcon(), func() {})
+	planHide := widget.NewToolbarAction(theme.VisibilityOffIcon(), func() {})
+	visibilityAction.Append(planShow)
+	planShow.OnActivated = func() {
+		pm.HandleVerifyPOPassword(po, func() {
+			passwordView.SetText(password)
+			visibilityAction.Items = nil
+			visibilityAction.Append(planHide)
+			visibilityAction.Refresh()
+			time.AfterFunc(config.PasswordPlainViveDuration(), func() {
+				planHide.OnActivated()
+			})
+		})
 
 	}
-	content.Add(passwordVisibilityButton)
+	planHide.OnActivated = func() {
+		passwordView.SetText("******")
+		visibilityAction.Items = nil
+		visibilityAction.Append(planShow)
+		visibilityAction.Refresh()
+
+	}
+
+	copyAction := config.UiDefault().IconCopy(func(copyFunc func(value string)) {
+		pm.HandleVerifyPOPassword(po, func() {
+			copyFunc(password)
+		})
+	})
+	toolbar := container.NewHBox(visibilityAction, copyAction)
+	content = container.NewBorder(nil, nil, nil, toolbar, passwordView)
 
 	return
 }

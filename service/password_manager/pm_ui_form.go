@@ -7,7 +7,6 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
-	godump "github.com/favframework/debug"
 	"github.com/hilaoyu/go-utils/utilRandom"
 	"github.com/hilaoyu/go-utils/utilUuid"
 	"github.com/hilaoyu/password-manager/config"
@@ -36,15 +35,17 @@ func (pm *PasswordManager) UiPasswordObjectForm(po *PasswordObject) (content *fy
 	submitButton := widget.NewButton("保存", func() {
 		name := strings.TrimSpace(nameInput.Text)
 		if "" == name {
-			config.UiDefault.DialogError(fmt.Errorf("名称不能为空"))
+			config.UiDefault().DialogError(fmt.Errorf("名称不能为空"))
 			return
 		}
-		if nil == po {
-			po = &PasswordObject{}
-		}
-		po.Name = nameInput.Text
-		po.Description = descriptionInput.Text
-		pm.HandleSavePasswordObject(po, true)
+		pm.HandleVerifyPOPassword(po, func() {
+			if nil == po {
+				po = &PasswordObject{}
+			}
+			po.Name = nameInput.Text
+			po.Description = descriptionInput.Text
+			pm.HandleSavePasswordObject(po, true)
+		})
 	})
 	formItems = append(formItems,
 		widget.NewFormItem("名称", nameInput),
@@ -56,7 +57,7 @@ func (pm *PasswordManager) UiPasswordObjectForm(po *PasswordObject) (content *fy
 	content = container.NewVBox(form, submitButton)
 	content.Add(canvas.NewText("---------------------------------------------------------------------------------", color.Transparent))
 	cancelButton := widget.NewButton("取消", func() {
-		config.UiDefault.PrevMainContent()
+		config.UiDefault().PrevMainContent()
 	})
 	content.Add(container.NewCenter(cancelButton))
 	return
@@ -82,7 +83,7 @@ func (pm *PasswordManager) UiPasswordItemForm(pi *PasswordItem, po *PasswordObje
 	passwordInput := widget.NewPasswordEntry()
 	passwordGenerate := widget.NewButton("生成", func() {
 		var d dialog.Dialog
-		d = config.UiDefault.Dialog("生成密码", pm.UiInputGeneratePasswordForm(func(length int, useSpecialCharacter bool) {
+		d = config.UiDefault().Dialog("生成密码", pm.UiInputGeneratePasswordForm(func(length int, useSpecialCharacter bool) {
 			passwordInput.SetText(utilRandom.RandPassword(length, !useSpecialCharacter))
 			d.Hide()
 		}))
@@ -113,7 +114,7 @@ func (pm *PasswordManager) UiPasswordItemForm(pi *PasswordItem, po *PasswordObje
 	extraUiItemsRefresh = func() {
 		extraUiItems.RemoveAll()
 		for _, extraItemEntry := range extraItems {
-			extraItemDelete := config.UiDefault.IconDelete(func() {
+			extraItemDelete := config.UiDefault().IconDelete(func() {
 				extraItems = slices.DeleteFunc(extraItems, func(entry *passwordItemExtraItemEntry) bool {
 					if nil == entry {
 						return false
@@ -129,7 +130,7 @@ func (pm *PasswordManager) UiPasswordItemForm(pi *PasswordItem, po *PasswordObje
 		extraUiItems.Refresh()
 	}
 
-	extraAdd := config.UiDefault.IconAdd(func() {
+	extraAdd := config.UiDefault().IconAdd(func() {
 		extraItems = append(extraItems, &passwordItemExtraItemEntry{
 			Id:    utilUuid.UuidGenerate(),
 			Name:  widget.NewEntry(),
@@ -156,26 +157,25 @@ func (pm *PasswordManager) UiPasswordItemForm(pi *PasswordItem, po *PasswordObje
 	extraUiItemsRefresh()
 
 	submitButton := widget.NewButton("保存", func() {
-		pi.Name = nameInput.Text
-		pi.Description = descriptionInput.Text
-		pi.Uri = uriInput.Text
-		pi.Account = accountInput.Text
-		pi.Password = passwordInput.Text
-		pi.Extra = []*PasswordItemExtra{}
-		for _, extraItemEntry := range extraItems {
-			pi.Extra = append(pi.Extra, &PasswordItemExtra{
-				Name:  extraItemEntry.Name.Text,
-				Value: extraItemEntry.Value.Text,
-			})
-		}
+		pm.HandleVerifyPOPassword(po, func() {
+			pi.Name = nameInput.Text
+			pi.Description = descriptionInput.Text
+			pi.Uri = uriInput.Text
+			pi.Account = accountInput.Text
+			pi.Password = passwordInput.Text
+			pi.Extra = []*PasswordItemExtra{}
+			for _, extraItemEntry := range extraItems {
+				pi.Extra = append(pi.Extra, &PasswordItemExtra{
+					Name:  extraItemEntry.Name.Text,
+					Value: extraItemEntry.Value.Text,
+				})
+			}
 
-		if isNew {
-			po.Passwords = append(po.Passwords, pi)
-		} else {
-			godump.Dump(po.Passwords)
-			godump.Dump(pi)
-		}
-		callback()
+			if isNew {
+				po.Passwords = append(po.Passwords, pi)
+			}
+			callback()
+		})
 	})
 
 	content = container.NewVBox(form, extraUi, submitButton, canvas.NewText("----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----|----", color.Transparent))
@@ -194,11 +194,11 @@ func (pm *PasswordManager) UiInputPasswordConfirmForm(callback func(value string
 	content = container.NewVBox()
 	submitButton := widget.NewButton("确定", func() {
 		if "" == passwordInput.Text {
-			config.UiDefault.DialogError(fmt.Errorf("密码不能为空"))
+			config.UiDefault().DialogError(fmt.Errorf("密码不能为空"))
 			return
 		}
 		if passwordConfirmInput.Text != passwordInput.Text {
-			config.UiDefault.DialogError(fmt.Errorf("两次密码不一样"))
+			config.UiDefault().DialogError(fmt.Errorf("两次密码不一样"))
 			return
 		}
 		callback(passwordInput.Text)
@@ -226,7 +226,7 @@ func (pm *PasswordManager) UiInputPasswordForm(callback func(value string)) (con
 	content = container.NewVBox()
 	submitButton := widget.NewButton("确定", func() {
 		if "" == passwordInput.Text {
-			config.UiDefault.DialogError(fmt.Errorf("密码不能为空"))
+			config.UiDefault().DialogError(fmt.Errorf("密码不能为空"))
 			return
 		}
 		callback(passwordInput.Text)
@@ -254,13 +254,13 @@ func (pm *PasswordManager) UiInputGeneratePasswordForm(callback func(length int,
 	content = container.NewVBox()
 	submitButton := widget.NewButton("生成", func() {
 		if "" == lengthInput.Text {
-			config.UiDefault.DialogError(fmt.Errorf("长度不能为空"))
+			config.UiDefault().DialogError(fmt.Errorf("长度不能为空"))
 			return
 		}
 		var err error
 		lengthValue, err = strconv.Atoi(lengthInput.Text)
 		if nil != err {
-			config.UiDefault.DialogError(fmt.Errorf("长度只能是数据"))
+			config.UiDefault().DialogError(fmt.Errorf("长度只能是数据"))
 		}
 
 		callback(lengthValue, useSpecialCharacterValue)
