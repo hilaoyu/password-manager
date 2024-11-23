@@ -7,13 +7,10 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/dialog"
 	"fyne.io/fyne/v2/widget"
-	"github.com/hilaoyu/go-utils/utilRandom"
 	"github.com/hilaoyu/go-utils/utilUuid"
 	"github.com/hilaoyu/password-manager/config"
-	"github.com/hilaoyu/password-manager/ui"
 	"image/color"
 	"slices"
-	"strconv"
 	"strings"
 )
 
@@ -83,8 +80,8 @@ func (pm *PasswordManager) UiPasswordItemForm(pi *PasswordItem, po *PasswordObje
 	passwordInput := widget.NewPasswordEntry()
 	passwordGenerate := widget.NewButton("生成", func() {
 		var d dialog.Dialog
-		d = config.UiDefault().Dialog("生成密码", pm.UiInputGeneratePasswordForm(func(length int, useSpecialCharacter bool) {
-			passwordInput.SetText(utilRandom.RandPassword(length, !useSpecialCharacter))
+		d = config.UiDefault().Dialog("生成密码", config.UiDefault().ToolPasswordGenerate(func(password string) {
+			passwordInput.SetText(password)
 			d.Hide()
 		}))
 
@@ -234,41 +231,6 @@ func (pm *PasswordManager) UiInputPasswordForm(callback func(value string)) (con
 	content.Add(form)
 	content.Add(canvas.NewText("--------------------------------------------------", color.Transparent))
 	content.Add(submitButton)
-
-	return
-}
-
-func (pm *PasswordManager) UiInputGeneratePasswordForm(callback func(length int, useSpecialCharacter bool)) (content *fyne.Container) {
-
-	form := widget.NewForm()
-	lengthValue := 0
-	useSpecialCharacterValue := false
-	lengthInput := ui.NewNumericalEntry()
-	lengthInput.SetText("16")
-	useSpecialCharacterInput := widget.NewCheck("包含特殊字条", func(b bool) {
-		useSpecialCharacterValue = b
-	})
-	form.AppendItem(widget.NewFormItem("长度", lengthInput))
-	form.AppendItem(widget.NewFormItem("", useSpecialCharacterInput))
-
-	content = container.NewVBox()
-	submitButton := widget.NewButton("生成", func() {
-		if "" == lengthInput.Text {
-			config.UiDefault().DialogError(fmt.Errorf("长度不能为空"))
-			return
-		}
-		var err error
-		lengthValue, err = strconv.Atoi(lengthInput.Text)
-		if nil != err {
-			config.UiDefault().DialogError(fmt.Errorf("长度只能是数据"))
-		}
-
-		callback(lengthValue, useSpecialCharacterValue)
-	})
-
-	content.Add(form)
-	content.Add(submitButton)
-	content.Add(canvas.NewText("--------------------------------------------------", color.Transparent))
 
 	return
 }

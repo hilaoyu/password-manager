@@ -12,7 +12,7 @@ var (
 )
 
 func ConfigureUiDefault() (userInterface *ui.Ui) {
-	userInterface = ui.NewUi("密码管理器", 800, 600)
+	userInterface = ui.NewUi("密码管理器", 1200, 600)
 	userInterface.Init()
 	uiDefault = userInterface
 	return
@@ -23,7 +23,7 @@ func UiDefault() *ui.Ui {
 }
 
 func PasswordVerifyDuration() time.Duration {
-	return time.Duration(10) * time.Minute
+	return time.Duration(5) * time.Minute
 }
 
 func PasswordPlainViveDuration() time.Duration {

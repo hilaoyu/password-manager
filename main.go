@@ -22,6 +22,10 @@ func main() {
 		m := fyne.NewMenu("PM",
 			fyne.NewMenuItem("显示", func() {
 				config.UiDefault().Window.Show()
+			}),
+			fyne.NewMenuItem("生成密码", func() {
+				config.UiDefault().Window.Show()
+				config.UiDefault().Dialog("生成密码", config.UiDefault().ToolPasswordGenerate())
 			}))
 		desk.SetSystemTrayMenu(m)
 	}

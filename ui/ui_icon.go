@@ -37,3 +37,15 @@ func (u *Ui) IconSave(callback func()) (content *fyne.Container) {
 	content = container.NewStack(widget.NewToolbar(widget.NewToolbarAction(theme.DocumentSaveIcon(), callback)))
 	return
 }
+func (u *Ui) IconClear(callback func()) (content *fyne.Container) {
+	content = container.NewStack(widget.NewToolbar(widget.NewToolbarAction(theme.ContentClearIcon(), callback)))
+	return
+}
+func (u *Ui) IconVisibility(callback func()) (content *fyne.Container) {
+	content = container.NewStack(widget.NewToolbar(widget.NewToolbarAction(theme.VisibilityIcon(), callback)))
+	return
+}
+func (u *Ui) IconVisibilityOff(callback func()) (content *fyne.Container) {
+	content = container.NewStack(widget.NewToolbar(widget.NewToolbarAction(theme.VisibilityOffIcon(), callback)))
+	return
+}

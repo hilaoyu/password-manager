@@ -2,8 +2,11 @@ package ui
 
 import (
 	"fyne.io/fyne/v2"
+	"fyne.io/fyne/v2/canvas"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/driver/mobile"
 	"fyne.io/fyne/v2/widget"
+	"image/color"
 	"strconv"
 )
 
@@ -38,4 +41,44 @@ func (e *NumericalEntry) TypedShortcut(shortcut fyne.Shortcut) {
 
 func (e *NumericalEntry) Keyboard() mobile.KeyboardType {
 	return mobile.NumberKeyboard
+}
+
+func NewLabelWrap(text string) (label *widget.Label) {
+	label = widget.NewLabel(text)
+	label.Wrapping = fyne.TextWrapBreak
+	return
+}
+func NewRectangleWithSize(fillColor color.Color, w float32, h float32) (rectangle *canvas.Rectangle) {
+	rectangle = canvas.NewRectangle(fillColor)
+	rectangle.SetMinSize(fyne.NewSize(w, h))
+	return
+}
+func NewScrollWithSize(content fyne.CanvasObject, w float32, h float32) (scroll *container.Scroll) {
+	scroll = container.NewScroll(content)
+	scroll.SetMinSize(fyne.NewSize(w, h))
+	return
+}
+
+func NewContainerWithSize(w float32, h float32, objects ...fyne.CanvasObject) (c *fyne.Container) {
+	var wFill fyne.CanvasObject
+	var hFill fyne.CanvasObject
+	if w > 0 {
+		wFill = NewRectangleWithSize(color.Transparent, w, 0)
+	} else {
+		wFill = nil
+	}
+	if h > 0 {
+		hFill = NewRectangleWithSize(color.Transparent, 0, h)
+	} else {
+		hFill = nil
+	}
+
+	c = container.NewBorder(nil, wFill, nil, hFill, objects...)
+	return
+}
+
+func NewRichTextFromMarkdownWrap(text string) (richText *widget.RichText) {
+	richText = widget.NewRichTextFromMarkdown(text)
+	richText.Wrapping = fyne.TextWrapBreak
+	return
 }

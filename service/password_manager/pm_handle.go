@@ -205,11 +205,9 @@ func (pm *PasswordManager) HandleVerifyPOPassword(po *PasswordObject, verifiedCa
 		return
 	}
 	if !po.verifyTimer.IsExpired() {
-		fmt.Println("!po.verifyTimer.IsExpired()")
 		verifiedCallback()
 		return
 	}
-	fmt.Println("po.verifyTimer.IsExpired()")
 	pm.HandleVerifyPOPasswordByInput(po, verifiedCallback)
 
 	return
