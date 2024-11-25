@@ -9,6 +9,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"github.com/hilaoyu/go-utils/utilUuid"
 	"github.com/hilaoyu/password-manager/config"
+	"github.com/hilaoyu/password-manager/ui"
 	"image/color"
 	"slices"
 	"strings"
@@ -111,7 +112,7 @@ func (pm *PasswordManager) UiPasswordItemForm(pi *PasswordItem, po *PasswordObje
 	extraUiItemsRefresh = func() {
 		extraUiItems.RemoveAll()
 		for _, extraItemEntry := range extraItems {
-			extraItemDelete := config.UiDefault().IconDelete(func() {
+			extraItemDelete := ui.IconDelete(func() {
 				extraItems = slices.DeleteFunc(extraItems, func(entry *passwordItemExtraItemEntry) bool {
 					if nil == entry {
 						return false
@@ -127,7 +128,7 @@ func (pm *PasswordManager) UiPasswordItemForm(pi *PasswordItem, po *PasswordObje
 		extraUiItems.Refresh()
 	}
 
-	extraAdd := config.UiDefault().IconAdd(func() {
+	extraAdd := ui.IconAdd(func() {
 		extraItems = append(extraItems, &passwordItemExtraItemEntry{
 			Id:    utilUuid.UuidGenerate(),
 			Name:  widget.NewEntry(),

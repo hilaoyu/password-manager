@@ -3,6 +3,7 @@ package password_manager
 import (
 	"encoding/json"
 	"fmt"
+	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 	"github.com/hilaoyu/go-utils/utilEnc"
 	"github.com/hilaoyu/go-utils/utilTime"
@@ -42,6 +43,7 @@ type PasswordObject struct {
 	Passwords     []*PasswordItem `json:"passwords,omitempty"`
 	searchKeyword string
 	verifyTimer   *utilTime.Timer
+	pwScroll      *container.Scroll
 }
 
 func (po *PasswordObject) Encode() (enData []byte, err error) {

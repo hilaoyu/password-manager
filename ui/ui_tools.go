@@ -44,8 +44,8 @@ func (u *Ui) ToolPasswordGenerate(callback ...func(value string)) (content *fyne
 						callback[0](password)
 					}))
 				}
-				passwordView.Add(container.NewBorder(nil, nil, nil, container.NewHBox(u.IconCopy(func(copyFunc func(value string)) {
-					copyFunc(password)
+				passwordView.Add(container.NewBorder(nil, nil, nil, container.NewHBox(IconCopy(func() {
+					u.UtilToClipboard(password)
 				}), callbackButton), NewLabelWrap(password)))
 			}
 		}

@@ -45,7 +45,7 @@ func (pm *PasswordManager) UiMenuTree() (c *fyne.Container) {
 		},
 		func(branch bool) fyne.CanvasObject {
 			label := widget.NewLabel("密码本名称")
-			removeIcon := config.UiDefault().IconRemove(func() {})
+			removeIcon := ui.IconRemove(func() {})
 			if branch {
 				label = widget.NewLabel("-密码本名称")
 			}
@@ -66,7 +66,7 @@ func (pm *PasswordManager) UiMenuTree() (c *fyne.Container) {
 				text += " (分支)"
 			}
 			label := widget.NewLabel(text)
-			removeIcon := config.UiDefault().IconRemove(func() {
+			removeIcon := ui.IconRemove(func() {
 				pm.HandleRemovePasswordObject(po)
 			})
 			content := container.NewBorder(nil, nil, nil, removeIcon, label)
@@ -144,25 +144,14 @@ func (pm *PasswordManager) UiPasswordObjectTitle(po *PasswordObject) (content *f
 	}
 
 	title := widget.NewRichTextFromMarkdown(fmt.Sprintf("# %s", po.Name))
-	poEditButton := config.UiDefault().IconEdit(func() {
+	poEditButton := ui.IconEdit(func() {
 		pm.HandleVerifyPOPassword(po, func() {
 			pm.HandleEditPasswordObject(po)
 		})
 	})
 
 	intro := widget.NewAccordion(widget.NewAccordionItem(fmt.Sprintf("%s", po.SavePath), ui.NewRichTextFromMarkdownWrap(po.Description)))
-	/*saveButton := config.UiDefault().IconSave(func() {
-		newPo, err := po.Clone()
-		if nil != err {
-			config.UiDefault().DialogError(fmt.Errorf("另存失败,复制数据失败:%v", err))
-			return
-
-		}
-		newPo.Secret = ""
-		newPo.SavePath = ""
-		pm.HandleSavePasswordObject(newPo, false)
-	})*/
-	saveButton := config.UiDefault().IconSave(func() {
+	saveButton := ui.IconSave(func() {
 		pm.HandleVerifyPOPasswordByInput(po, func() {
 			newPo, err := po.Clone()
 			if nil != err {
@@ -182,18 +171,18 @@ func (pm *PasswordManager) UiPasswordObjectToolbar(po *PasswordObject) (content 
 	content = container.NewVBox()
 	searchInput := widget.NewEntry()
 	searchInput.SetText(po.searchKeyword)
-	searchButton := config.UiDefault().IconSearch(func() {
+	searchButton := ui.IconSearch(func() {
 		po.searchKeyword = strings.TrimSpace(searchInput.Text)
 		pm.HandleViewPasswordObject(po)
 		return
 	})
-	searchClearButton := config.UiDefault().IconClear(func() {
+	searchClearButton := ui.IconClear(func() {
 		po.searchKeyword = ""
 		pm.HandleViewPasswordObject(po)
 		return
 	})
 
-	addButton := config.UiDefault().IconAdd(func() {
+	addButton := ui.IconAdd(func() {
 		pm.HandleEditPasswordItem(nil, po)
 	})
 
@@ -211,7 +200,23 @@ func (pm *PasswordManager) UiPasswordObjectPasswords(passwords []*PasswordItem, 
 	for _, pi := range passwords {
 		passwordsView.Add(pm.UiPasswordItem(pi, po))
 	}
-	content = container.NewStack(ui.NewScrollWithSize(passwordsView, 1000, 400))
+	if nil != po.pwScroll {
+		offset := po.pwScroll.Offset
+		po.pwScroll.Content = passwordsView
+		po.pwScroll.Refresh()
+		if offset.X > 0 {
+			po.pwScroll.Offset.X = offset.X
+		}
+		if offset.Y > 0 {
+			po.pwScroll.Offset.Y = offset.Y
+		}
+
+	} else {
+		po.pwScroll = ui.NewScrollWithSize(passwordsView, 1000, 400)
+		po.pwScroll.Direction = container.ScrollVerticalOnly
+	}
+
+	content = container.NewStack(po.pwScroll)
 	return
 }
 
@@ -222,12 +227,12 @@ func (pm *PasswordManager) UiPasswordItem(pi *PasswordItem, po *PasswordObject) 
 	content = container.NewVBox()
 
 	nameUi := widget.NewRichTextFromMarkdown(fmt.Sprintf(`## %s `, pi.Name))
-	editButton := config.UiDefault().IconEdit(func() {
+	editButton := ui.IconEdit(func() {
 		pm.HandleVerifyPOPassword(po, func() {
 			pm.HandleEditPasswordItem(pi, po)
 		})
 	})
-	deleteButton := config.UiDefault().IconDelete(func() {
+	deleteButton := ui.IconDelete(func() {
 		pm.HandleVerifyPOPassword(po, func() {
 			po.Passwords = slices.DeleteFunc(po.Passwords, func(item *PasswordItem) bool {
 				if nil == item {
@@ -240,8 +245,8 @@ func (pm *PasswordManager) UiPasswordItem(pi *PasswordItem, po *PasswordObject) 
 	})
 	content.Add(container.NewBorder(nil, nil, nil, deleteButton, container.NewHBox(nameUi, editButton)))
 
-	uriUi := container.NewBorder(nil, nil, nil, config.UiDefault().IconCopy(func(copyFunc func(value string)) {
-		copyFunc(pi.Uri)
+	uriUi := container.NewBorder(nil, nil, nil, ui.IconCopy(func() {
+		config.UiDefault().UtilToClipboard(pi.Uri)
 	}), container.NewHBox(
 		widget.NewRichTextFromMarkdown("### URI: "),
 		ui.NewContainerWithSize(200, 0, ui.NewLabelWrap(pi.Uri)),
@@ -252,8 +257,8 @@ func (pm *PasswordManager) UiPasswordItem(pi *PasswordItem, po *PasswordObject) 
 	)
 	column1 := container.NewVBox(uriUi, DescUi)
 
-	accountUi := container.NewBorder(nil, nil, nil, config.UiDefault().IconCopy(func(copyFunc func(value string)) {
-		copyFunc(pi.Account)
+	accountUi := container.NewBorder(nil, nil, nil, ui.IconCopy(func() {
+		config.UiDefault().UtilToClipboard(pi.Account)
 	}), ui.NewContainerWithSize(200, 0, ui.NewLabelWrap(pi.Account)))
 
 	column2 := container.NewVBox(accountUi, pm.UiPassword(pi.Password, po))
@@ -261,8 +266,8 @@ func (pm *PasswordManager) UiPasswordItem(pi *PasswordItem, po *PasswordObject) 
 	column3 := container.NewVBox()
 	if len(pi.Extra) > 0 {
 		for _, pe := range pi.Extra {
-			peUi := container.NewBorder(nil, nil, ui.NewContainerWithSize(48, 0, ui.NewRichTextFromMarkdownWrap(fmt.Sprintf("### %s: ", pe.Name))), config.UiDefault().IconCopy(func(copyFunc func(value string)) {
-				copyFunc(pe.Value)
+			peUi := container.NewBorder(nil, nil, ui.NewContainerWithSize(48, 0, ui.NewRichTextFromMarkdownWrap(fmt.Sprintf("### %s: ", pe.Name))), ui.IconCopy(func() {
+				config.UiDefault().UtilToClipboard(pe.Value)
 			}), ui.NewContainerWithSize(200, 0, ui.NewLabelWrap(pe.Value)))
 			column3.Add(peUi)
 		}
@@ -310,14 +315,14 @@ func (pm *PasswordManager) UiPassword(password string, po *PasswordObject) (cont
 		})
 
 	}
-	planShow = config.UiDefault().IconVisibility(planShowHandle)
-	planHide = config.UiDefault().IconVisibilityOff(planHideHandle)
+	planShow = ui.IconVisibility(planShowHandle)
+	planHide = ui.IconVisibilityOff(planHideHandle)
 
 	visibilityAction.Add(planShow)
 
-	copyAction := config.UiDefault().IconCopy(func(copyFunc func(value string)) {
+	copyAction := ui.IconCopy(func() {
 		pm.HandleVerifyPOPassword(po, func() {
-			copyFunc(password)
+			config.UiDefault().UtilToClipboard(password)
 		})
 	})
 	toolbar := container.NewHBox(visibilityAction, copyAction)
