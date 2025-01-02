@@ -15,7 +15,7 @@ import (
 )
 
 func (pm *PasswordManager) ListenFileDropIn() {
-	config.UiDefault().Window.SetOnDropped(func(position fyne.Position, uris []fyne.URI) {
+	config.UiDefault().WindowMain.SetOnDropped(func(position fyne.Position, uris []fyne.URI) {
 		if len(uris) > 0 {
 			path := uris[0].Path()
 			if "" != path {

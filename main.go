@@ -22,7 +22,7 @@ func main() {
 	if desk, ok := config.UiDefault().App.(desktop.App); ok {
 		m := fyne.NewMenu("PM",
 			fyne.NewMenuItem("显示", func() {
-				config.UiDefault().Window.Show()
+				config.UiDefault().WindowMain.Show()
 			}),
 			fyne.NewMenuItem("生成密码", func() {
 				config.UiDefault().NweWindowAndShow("生成密码", tools.ToolPasswordGenerate())
@@ -32,8 +32,8 @@ func main() {
 		desk.SetSystemTrayMenu(m)
 	}
 
-	config.UiDefault().Window.SetCloseIntercept(func() {
-		config.UiDefault().Window.Hide()
+	config.UiDefault().WindowMain.SetCloseIntercept(func() {
+		config.UiDefault().WindowMain.Hide()
 	})
 	config.UiDefault().ShowAndRun()
 }

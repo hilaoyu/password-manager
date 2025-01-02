@@ -10,7 +10,7 @@ import (
 
 type Ui struct {
 	App                    fyne.App
-	Window                 fyne.Window
+	WindowMain             fyne.Window
 	containerTop           *fyne.Container
 	containerMainContent   *fyne.Container
 	containerMainPrevItems []fyne.CanvasObject
@@ -30,8 +30,8 @@ func NewUi(title string, w float32, h float32) (view *Ui) {
 	}
 
 	view = &Ui{
-		App:    fyneApp,
-		Window: window,
+		App:        fyneApp,
+		WindowMain: window,
 	}
 
 	view.Init()
@@ -54,14 +54,14 @@ func (u *Ui) Init() {
 	u.containerBottom = boxBottom
 	content := container.NewBorder(boxTop, boxBottom, nil, nil, boxMain)
 	//content := split
-	u.Window.SetContent(content)
-	u.Window.CenterOnScreen()
+	u.WindowMain.SetContent(content)
+	u.WindowMain.CenterOnScreen()
 
 }
 
 func (u *Ui) ShowAndRun() {
-	if nil != u.Window {
-		u.Window.ShowAndRun()
+	if nil != u.WindowMain {
+		u.WindowMain.ShowAndRun()
 		return
 	}
 	panic("程序未初始化")

@@ -1,5 +1,5 @@
 package ui
 
 func (u *Ui) UtilToClipboard(value string) {
-	u.Window.Clipboard().SetContent(value)
+	u.WindowMain.Clipboard().SetContent(value)
 }

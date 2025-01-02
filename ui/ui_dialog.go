@@ -7,12 +7,12 @@ import (
 )
 
 func (u *Ui) DialogError(err error) {
-	dialog.NewError(err, u.Window).Show()
+	dialog.NewError(err, u.WindowMain).Show()
 
 	return
 }
 func (u *Ui) DialogInfo(title string, msg string) {
-	dialog.NewInformation(title, msg, u.Window).Show()
+	dialog.NewInformation(title, msg, u.WindowMain).Show()
 
 	return
 }
@@ -25,7 +25,7 @@ func (u *Ui) DialogSaveFile(callback func(writer fyne.URIWriteCloser), defaultDi
 			return
 		}
 		callback(writer)
-	}, u.Window)
+	}, u.WindowMain)
 
 	if "" != defaultDir {
 		defaultDirUri, _ := storage.ListerForURI(storage.NewFileURI(defaultDir))
@@ -53,7 +53,7 @@ func (u *Ui) DialogOpenFile(callback func(reader fyne.URIReadCloser), filter []s
 
 		callback(reader)
 
-	}, u.Window)
+	}, u.WindowMain)
 
 	if len(filter) > 0 {
 		d.SetFilter(storage.NewExtensionFileFilter(filter))
@@ -70,7 +70,7 @@ func (u *Ui) DialogOpenFile(callback func(reader fyne.URIReadCloser), filter []s
 }
 
 func (u *Ui) Dialog(title string, content *fyne.Container) dialog.Dialog {
-	d := dialog.NewCustom(title, "取消", content, u.Window)
+	d := dialog.NewCustom(title, "取消", content, u.WindowMain)
 	d.Show()
 
 	return d
