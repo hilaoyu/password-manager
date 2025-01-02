@@ -8,6 +8,7 @@ import (
 	"github.com/hilaoyu/go-utils/utilEnc"
 	"github.com/hilaoyu/go-utils/utils"
 	"github.com/hilaoyu/password-manager/config"
+	"github.com/hilaoyu/password-manager/tools"
 	"github.com/hilaoyu/password-manager/ui"
 	"slices"
 	"strings"
@@ -103,13 +104,12 @@ func (pm *PasswordManager) UiTop() (c *fyne.Container) {
 	title := widget.NewRichTextFromMarkdown("# 密码管理")
 	head := container.NewHBox(title, menu)
 
-	tools := container.NewHBox()
-	tools.Add(widget.NewButton("生成密码", func() {
-		//var d dialog.Dialog
-		config.UiDefault().Dialog("生成密码", config.UiDefault().ToolPasswordGenerate())
+	toolBar := container.NewHBox()
+	toolBar.Add(widget.NewButton("生成密码", func() {
+		config.UiDefault().NweWindowAndShow("生成密码", tools.ToolPasswordGenerate())
 	}))
 
-	c = container.NewBorder(nil, nil, nil, tools, head)
+	c = container.NewBorder(nil, nil, nil, toolBar, head)
 	return
 }
 

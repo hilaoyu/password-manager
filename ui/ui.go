@@ -66,3 +66,16 @@ func (u *Ui) ShowAndRun() {
 	}
 	panic("程序未初始化")
 }
+
+func (u *Ui) NweWindow(title string) fyne.Window {
+	return u.App.NewWindow(title)
+}
+
+func (u *Ui) NweWindowAndShow(title string, content fyne.CanvasObject) {
+	w := u.App.NewWindow(title)
+	w.SetContent(content)
+	w.Show()
+}
+func (u *Ui) WindowError(err error) {
+	u.NweWindowAndShow("错误", container.NewStack(widget.NewLabel(err.Error())))
+}

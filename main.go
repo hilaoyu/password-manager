@@ -5,6 +5,7 @@ import (
 	"fyne.io/fyne/v2/driver/desktop"
 	"github.com/hilaoyu/password-manager/config"
 	"github.com/hilaoyu/password-manager/service/password_manager"
+	"github.com/hilaoyu/password-manager/tools"
 )
 
 func init() {
@@ -24,8 +25,9 @@ func main() {
 				config.UiDefault().Window.Show()
 			}),
 			fyne.NewMenuItem("生成密码", func() {
-				config.UiDefault().Window.Show()
-				config.UiDefault().Dialog("生成密码", config.UiDefault().ToolPasswordGenerate())
+				config.UiDefault().NweWindowAndShow("生成密码", tools.ToolPasswordGenerate())
+				//config.UiDefault().Window.Show()
+				//config.UiDefault().Dialog("生成密码", config.UiDefault().ToolPasswordGenerate())
 			}))
 		desk.SetSystemTrayMenu(m)
 	}

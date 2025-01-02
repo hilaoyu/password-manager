@@ -1,4 +1,4 @@
-package ui
+package tools
 
 import (
 	"fmt"
@@ -7,23 +7,25 @@ import (
 	"fyne.io/fyne/v2/container"
 	"fyne.io/fyne/v2/widget"
 	"github.com/hilaoyu/go-utils/utilRandom"
+	"github.com/hilaoyu/password-manager/config"
+	"github.com/hilaoyu/password-manager/ui"
 	"image/color"
 	"strconv"
 )
 
-func (u *Ui) ToolPasswordGenerate(callback ...func(value string)) (content *fyne.Container) {
+func ToolPasswordGenerate(callback ...func(value string)) (content *fyne.Container) {
 	var passwords []string
 
 	form := widget.NewForm()
 	lengthValue := 0
 	useSpecialCharacterValue := false
-	lengthInput := NewNumericalEntry()
+	lengthInput := ui.NewNumericalEntry()
 	lengthInput.SetText("16")
 	useSpecialCharacterInput := widget.NewCheck("包含特殊字条", func(b bool) {
 		useSpecialCharacterValue = b
 	})
 
-	numInput := NewNumericalEntry()
+	numInput := ui.NewNumericalEntry()
 	numInput.SetText("1")
 	numValue := 1
 
@@ -32,7 +34,7 @@ func (u *Ui) ToolPasswordGenerate(callback ...func(value string)) (content *fyne
 	form.AppendItem(widget.NewFormItem("数量", numInput))
 
 	passwordView := container.NewVBox()
-	passwordViewScroll := NewScrollWithSize(passwordView, 200, 210)
+	passwordViewScroll := ui.NewScrollWithSize(passwordView, 200, 210)
 
 	passwordViewRefresh := func() {
 		passwordView.RemoveAll()
@@ -44,9 +46,9 @@ func (u *Ui) ToolPasswordGenerate(callback ...func(value string)) (content *fyne
 						callback[0](password)
 					}))
 				}
-				passwordView.Add(container.NewBorder(nil, nil, nil, container.NewHBox(IconCopy(func() {
-					u.UtilToClipboard(password)
-				}), callbackButton), NewLabelWrap(password)))
+				passwordView.Add(container.NewBorder(nil, nil, nil, container.NewHBox(ui.IconCopy(func() {
+					config.UiDefault().UtilToClipboard(password)
+				}), callbackButton), ui.NewLabelWrap(password)))
 			}
 		}
 		passwordView.Refresh()
@@ -55,18 +57,18 @@ func (u *Ui) ToolPasswordGenerate(callback ...func(value string)) (content *fyne
 
 	submitButton := widget.NewButton("生成", func() {
 		if "" == lengthInput.Text {
-			u.DialogError(fmt.Errorf("长度不能为空"))
+			config.UiDefault().WindowError(fmt.Errorf("长度不能为空"))
 			return
 		}
 		var err error
 		lengthValue, err = strconv.Atoi(lengthInput.Text)
 		if nil != err {
-			u.DialogError(fmt.Errorf("长度只能是数字"))
+			config.UiDefault().WindowError(fmt.Errorf("长度只能是数字"))
 			return
 		}
 		numValue, err = strconv.Atoi(numInput.Text)
 		if nil != err {
-			u.DialogError(fmt.Errorf("数量只能是数字"))
+			config.UiDefault().WindowError(fmt.Errorf("数量只能是数字"))
 			return
 		}
 

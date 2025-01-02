@@ -9,6 +9,7 @@ import (
 	"fyne.io/fyne/v2/widget"
 	"github.com/hilaoyu/go-utils/utilUuid"
 	"github.com/hilaoyu/password-manager/config"
+	"github.com/hilaoyu/password-manager/tools"
 	"github.com/hilaoyu/password-manager/ui"
 	"image/color"
 	"slices"
@@ -81,7 +82,7 @@ func (pm *PasswordManager) UiPasswordItemForm(pi *PasswordItem, po *PasswordObje
 	passwordInput := widget.NewPasswordEntry()
 	passwordGenerate := widget.NewButton("生成", func() {
 		var d dialog.Dialog
-		d = config.UiDefault().Dialog("生成密码", config.UiDefault().ToolPasswordGenerate(func(password string) {
+		d = config.UiDefault().Dialog("生成密码", tools.ToolPasswordGenerate(func(password string) {
 			passwordInput.SetText(password)
 			d.Hide()
 		}))
