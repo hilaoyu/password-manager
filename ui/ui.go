@@ -55,6 +55,7 @@ func (u *Ui) Init() {
 	content := container.NewBorder(boxTop, boxBottom, nil, nil, boxMain)
 	//content := split
 	u.WindowMain.SetContent(content)
+	u.WindowMain.SetFixedSize(false)
 	u.WindowMain.CenterOnScreen()
 
 }
@@ -74,8 +75,13 @@ func (u *Ui) NweWindow(title string) fyne.Window {
 func (u *Ui) NweWindowAndShow(title string, content fyne.CanvasObject) {
 	w := u.App.NewWindow(title)
 	w.SetContent(content)
+	w.CenterOnScreen()
 	w.Show()
 }
 func (u *Ui) WindowError(err error) {
-	u.NweWindowAndShow("错误", container.NewStack(widget.NewLabel(err.Error())))
+	w := u.App.NewWindow("错误")
+	w.SetContent(container.NewStack(widget.NewLabel(err.Error())))
+	w.SetFixedSize(false)
+	w.CenterOnScreen()
+	w.Show()
 }

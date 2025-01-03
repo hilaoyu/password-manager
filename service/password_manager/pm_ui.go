@@ -108,6 +108,12 @@ func (pm *PasswordManager) UiTop() (c *fyne.Container) {
 	toolBar.Add(widget.NewButton("生成密码", func() {
 		config.UiDefault().NweWindowAndShow("生成密码", tools.ToolPasswordGenerate())
 	}))
+	toolBar.Add(widget.NewButton("AES加解密", func() {
+		config.UiDefault().NweWindowAndShow("AES加解密", tools.ToolAesEncrypt())
+	}))
+	toolBar.Add(widget.NewButton("AES加密请求", func() {
+		config.UiDefault().NweWindowAndShow("AES加密请求", tools.ToolAesRequest())
+	}))
 
 	c = container.NewBorder(nil, nil, nil, toolBar, head)
 	return

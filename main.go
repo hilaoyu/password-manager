@@ -26,9 +26,14 @@ func main() {
 			}),
 			fyne.NewMenuItem("生成密码", func() {
 				config.UiDefault().NweWindowAndShow("生成密码", tools.ToolPasswordGenerate())
-				//config.UiDefault().Window.Show()
-				//config.UiDefault().Dialog("生成密码", config.UiDefault().ToolPasswordGenerate())
-			}))
+			}),
+			fyne.NewMenuItem("AES加解密", func() {
+				config.UiDefault().NweWindowAndShow("AES加解密", tools.ToolAesEncrypt())
+			}),
+			fyne.NewMenuItem("AES加密请求", func() {
+				config.UiDefault().NweWindowAndShow("AES加密请求", tools.ToolAesRequest())
+			}),
+		)
 		desk.SetSystemTrayMenu(m)
 	}
 
